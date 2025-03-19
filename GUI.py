@@ -1,51 +1,31 @@
 import tkinter as tk
 from tkinter import messagebox
-import requests
-
-# API Details
-API_KEY = "c20bcc5bca911f60d116478ec23d8e0f"
-BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
+from weather_api import get_weather
 
 def fetch_weather():
-    """Fetch weather data and update the UI"""
     city = city_entry.get()
-    
-    if not city:
-        messagebox.showerror("Error", "Please enter a city name")
-        return
-    
-    params = {"q": city, "appid": API_KEY, "units": "metric"}
-    response = requests.get(BASE_URL, params=params)
-    data = response.json()
+    weather_data = get_weather(city)
 
-    if response.status_code == 200:
-        weather_info = f"City: {data['name']}\n"
-        weather_info += f"Temperature: {data['main']['temp']}°C\n"
-        weather_info += f"Description: {data['weather'][0]['description']}\n"
-        weather_info += f"Humidity: {data['main']['humidity']}%\n"
-        weather_info += f"Wind Speed: {data['wind']['speed']} m/s"
-
-        weather_label.config(text=weather_info)
+    if "error" in weather_data:
+        messagebox.showerror("Error", weather_data["error"])
     else:
-        messagebox.showerror("Error", "City not found!")
+        weather_desc = weather_data["weather"][0]["description"]
+        temp = weather_data["main"]["temp"]
+        humidity = weather_data["main"]["humidity"]
+        wind_speed = weather_data["wind"]["speed"]
+        result_label.config(text=f"🌤️ {weather_desc}\n🌡️ {temp}°C\n💧 {humidity}%\n💨 {wind_speed} m/s")
 
 # GUI Setup
 root = tk.Tk()
 root.title("Weather App")
-root.geometry("400x300")
+root.geometry("300x250")
 
-# Input
+tk.Label(root, text="Enter City:", font=("Arial", 14)).pack(pady=10)
 city_entry = tk.Entry(root, font=("Arial", 14))
-city_entry.pack(pady=10)
+city_entry.pack()
 
-# Fetch
-fetch_button = tk.Button(root, text="Get Weather", command=fetch_weather)
-fetch_button.pack()
-
-# Output
-weather_label = tk.Label(root, text="", font=("Arial", 12), justify="left")
-weather_label.pack(pady=10)
-
+tk.Button(root, text="Get Weather", font=("Arial", 14), command=fetch_weather).pack(pady=10)
+result_label = tk.Label(root, text="", font=("Arial", 14))
+result_label.pack()
 
 root.mainloop()
-
